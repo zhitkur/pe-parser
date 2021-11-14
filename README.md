@@ -8,7 +8,8 @@ very simple pe-file parser written in c++
 - Done!  
 
 ### example
-![Example](https://user-images.githubusercontent.com/70523536/141290707-b77529cc-a0e6-499b-ad81-f9306f39cc24.png)
+![e.g](https://user-images.githubusercontent.com/70523536/141674874-4d79472f-987f-48d5-8ceb-baea4c00ffbb.png)
+
 
 ### credits
 - https://github.com/ex-ref/printa (color-print library)

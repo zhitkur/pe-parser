@@ -1,6 +1,11 @@
 #include "utils.h"
 #pragma warning ( disable : 4311 4302 4312 )
 
+PIMAGE_NT_HEADERS utils::get_header(PVOID Module)
+{
+	return (PIMAGE_NT_HEADERS)((PBYTE)Module + PIMAGE_DOS_HEADER(Module)->e_lfanew);
+}
+
 void utils::pe_parser()
 {
 	std::ifstream target(m_file.c_str(), std::ios_base::in | std::ios_base::binary);
@@ -18,8 +23,12 @@ void utils::pe_parser()
 
 		//! Get size of killobyte
 		size_t kb = length / 1024;	
+		size_t mb = kb / 1024;
 
-		printa->print<info>("File size -> [ {} KB ({:d} bytes)  ]\n", kb, length);
+		if(mb >= 1)
+			printa->print<info>("File size -> [ {} MB ({:d} bytes) ]\n", mb, length);
+		else
+			printa->print<info>("File size -> [ {} KB ({:d} bytes) ]\n", kb, length);
 
 		target.read(m_buffer, length);
 		printa->print<load>("File infomation loading...\n");
@@ -27,14 +36,29 @@ void utils::pe_parser()
 		IMAGE_DOS_HEADER* pDos = (IMAGE_DOS_HEADER*)m_buffer;
 		IMAGE_NT_HEADERS* pNt = (IMAGE_NT_HEADERS*)((ULONG64)m_buffer + pDos->e_lfanew);
 
+		IMAGE_SECTION_HEADER* pSection = (IMAGE_SECTION_HEADER*)((ULONG64)pNt + sizeof(IMAGE_NT_HEADERS));
+
+		auto header = get_header(m_buffer);
+		auto section = IMAGE_FIRST_SECTION(header);
+
+		printf("\nSection Name\tVA\tPointerToRawData\tSizeofRawData\n");
+		for (int i = 0; i < pNt->FileHeader.NumberOfSections; i++, section++)
+		{
+			if (memcmp(section->Name, ".textbss", 8))
+			{
+				printf("%-8s\t%x\t%x\t\t\t%x\n", section->Name, section->VirtualAddress,
+					section->PointerToRawData, section->SizeOfRawData);
+			}
+		}
+
 		/*
 		-------------------------  DOS Header ----------------------------------------
 		*/
 
 		printa->project_dos();
 
-		printa->print<info>("e_magic -> 0x{:X}\n", pDos->e_magic);
-		printa->print<info>("e_lfanew -> 0x{:X}\n", pDos->e_lfanew);
+		printa->print<info>("Magic -> 0x{:X}\n", pDos->e_magic);
+		printa->print<info>("lfanew -> 0x{:X}\n", pDos->e_lfanew);
 
 		/*
 		-------------------------  NT Header ----------------------------------------
